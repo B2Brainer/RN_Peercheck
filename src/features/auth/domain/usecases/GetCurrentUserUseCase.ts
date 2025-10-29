@@ -11,5 +11,3 @@ export class GetCurrentUserUseCase {
     return user;
   }
 }
-
-

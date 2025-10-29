@@ -3,36 +3,23 @@ import { AuthRepository } from "../../domain/repositories/AuthRepository";
 import { IAuthDataSource } from "../datasources/iAuthDataSource";
 
 export class AuthRepositoryImpl implements AuthRepository {
-  private dataSource: IAuthDataSource;
-
-  constructor(dataSource: IAuthDataSource) {
-    this.dataSource = dataSource;
-  }
+  constructor(private dataSource: IAuthDataSource) {}
 
   async login(email: string, password: string): Promise<AuthUser> {
-    const user = await this.dataSource.login(email, password);
-    console.log("✅ [AuthRepositoryImpl] Usuario logueado:", user);
-    return user;
+    return this.dataSource.login(email, password);
   }
 
   async signup(email: string, password: string): Promise<AuthUser> {
-    const user = await this.dataSource.signup(email, password);
-    console.log("✅ [AuthRepositoryImpl] Usuario registrado:", user);
-    return user;
+    return this.dataSource.signup(email, password);
   }
 
   async logout(): Promise<void> {
-    console.log("🚪 [AuthRepositoryImpl] Cerrando sesión...");
     return this.dataSource.logout();
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
-    const user = await this.dataSource.getCurrentUser();
-    console.log("👤 [AuthRepositoryImpl] Usuario actual:", user);
-    return user;
+    return this.dataSource.getCurrentUser();
   }
 }
-
-
 
 

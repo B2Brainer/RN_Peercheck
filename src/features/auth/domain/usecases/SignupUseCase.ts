@@ -10,4 +10,3 @@ export class SignupUseCase {
     return user;
   }
 }
-

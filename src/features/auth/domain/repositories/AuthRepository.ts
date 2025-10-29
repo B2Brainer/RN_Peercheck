@@ -6,4 +6,3 @@ export interface AuthRepository {
   logout(): Promise<void>;
   getCurrentUser(): Promise<AuthUser | null>;
 }
-

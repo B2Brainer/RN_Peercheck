@@ -8,4 +8,3 @@ export class LogoutUseCase {
     return this.repo.logout();
   }
 }
-

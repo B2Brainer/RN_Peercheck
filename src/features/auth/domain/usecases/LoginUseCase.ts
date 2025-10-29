@@ -10,4 +10,3 @@ export class LoginUseCase {
     return user;
   }
 }
-
