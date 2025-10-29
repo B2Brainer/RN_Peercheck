@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { View, Image, StyleSheet } from "react-native";
-import { Button, Text, TextInput, Checkbox } from "react-native-paper";
-import { useAuth } from "../context/authContext";
 import { router } from "expo-router";
+import React, { useState } from "react";
+import { Image, StyleSheet, View } from "react-native";
+import { Button, Checkbox, Text, TextInput } from "react-native-paper";
 
-export default function LoginScreen() {
-  const { login } = useAuth();
+// 🔹 Definimos el tipo de props
+type Props = {
+  onLogin: (email: string, password: string) => Promise<void>;
+};
+
+export default function LoginScreen({ onLogin }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -14,9 +17,10 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     try {
       setLoading(true);
-      await login(email, password);
+      console.log("🔐 [UI] Intentando login desde LoginScreen...");
+      await onLogin(email, password); // ✅ usa la prop onLogin enviada desde login.tsx
     } catch (err) {
-      console.error("Error al iniciar sesión", err);
+      console.error("❌ Error al iniciar sesión", err);
     } finally {
       setLoading(false);
     }
@@ -27,7 +31,7 @@ export default function LoginScreen() {
       {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
-          source={require("../../../../../assets/images/logo.png")} // reemplázalo por tu logo
+          source={require("../../../../../assets/images/logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -158,3 +162,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
+

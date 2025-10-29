@@ -40,18 +40,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    getCurrentUserUseCase.execute().then((user: React.SetStateAction<AuthUser | null>) => {
-      setUser(user);
-      setIsLoggedIn(!!user);
-    });
+  // 👇 No cargamos sesión previa automáticamente, solo dejamos los usuarios guardados
+  console.log("🚪 [AuthContext] Iniciando app sin sesión activa");
+  setUser(null);
+  setIsLoggedIn(false);
+}, []);
 
-
-  }, [getCurrentUserUseCase]);
 
   const login = async (email: string, password: string) => {
     const loggedInUser = await loginUseCase.execute(email, password);
+    console.log("🚀 [AuthContext] Login completado, usuario:", loggedInUser);
     setUser(loggedInUser);
     setIsLoggedIn(true);
+    console.log("🔥 [AuthContext] Estado isLoggedIn ahora:", true);
   };
 
   const signup = async (email: string, password: string) => {
