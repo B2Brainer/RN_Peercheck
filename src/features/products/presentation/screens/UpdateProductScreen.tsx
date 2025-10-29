@@ -1,15 +1,11 @@
-
 import { Product } from "@/src/features/products/domain/entities/Product";
-import { useNavigation } from "@react-navigation/native";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { useProducts } from "../context/productContext";
 
-export default function UpdateProductScreen({ route }: { route: any }) {
-  const { id } = route.params;
-
-  const navigation = useNavigation();
-
+export default function UpdateProductScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { getProduct, updateProduct } = useProducts();
 
   const [loading, setLoading] = useState(true);
@@ -21,39 +17,32 @@ export default function UpdateProductScreen({ route }: { route: any }) {
   const [quantity, setQuantity] = useState("");
 
   useEffect(() => {
-    console.log("UpdateProductScreen - Received id:", id);
     const load = async () => {
       try {
         setLoading(true);
-        console.log("UpdateProductScreen - Calling getProduct with id:", id);
-        const p = await getProduct(id);
-        console.log("UpdateProductScreen - Retrieved product:", p);
+        if (!id) {
+          setNotFound(true);
+          return;
+        }
 
+        const p = await getProduct(id as string);
         if (!p) {
-          console.log("UpdateProductScreen - Product not found");
           setNotFound(true);
         } else {
-          console.log("UpdateProductScreen - Setting product data:", {
-            name: p.name,
-            description: p.description,
-            quantity: p.quantity
-          });
           setProduct(p);
           setName(p.name);
           setDescription(p.description);
           setQuantity(p.quantity.toString());
         }
       } catch (error) {
-        console.error("UpdateProductScreen - Error loading product:", error);
+        console.error("Error loading product:", error);
         setNotFound(true);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
-      load();
-    }
+    load();
   }, [id]);
 
   const handleUpdate = async () => {
@@ -64,7 +53,7 @@ export default function UpdateProductScreen({ route }: { route: any }) {
       description,
       quantity: Number(quantity),
     });
-    navigation.goBack();
+    router.back();
   };
 
   if (loading) {
@@ -85,20 +74,8 @@ export default function UpdateProductScreen({ route }: { route: any }) {
     );
   }
 
-  if (!product) {
-    return (
-      <Surface style={{ flex: 1, justifyContent: "center", padding: 16 }}>
-        <Text>Loading...</Text>
-      </Surface>
-    );
-  }
-
   return (
     <Surface style={{ flex: 1, justifyContent: "center", padding: 16 }}>
-      {/* <Text variant="headlineMedium" style={{ marginBottom: 16 }}>
-        Update Product
-      </Text> */}
-
       <TextInput
         label="Name"
         value={name}
@@ -127,3 +104,4 @@ export default function UpdateProductScreen({ route }: { route: any }) {
     </Surface>
   );
 }
+

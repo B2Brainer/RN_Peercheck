@@ -1,9 +1,9 @@
-
+import { router } from "expo-router";
 import { useState } from "react";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { useAuth } from "../context/authContext";
 
-export default function SignupScreen({ navigation }: { navigation: any }) {
+export default function SignupScreen() {
   const { signup } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,6 +13,7 @@ export default function SignupScreen({ navigation }: { navigation: any }) {
     try {
       setLoading(true);
       await signup(email, password);
+      router.replace("/"); // ✅ corregido: redirige al home sin usar "(tabs)"
     } catch (err) {
       console.error("Signup failed", err);
     } finally {
@@ -22,7 +23,10 @@ export default function SignupScreen({ navigation }: { navigation: any }) {
 
   return (
     <Surface style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-      <Text variant="headlineMedium" style={{ marginBottom: 20, textAlign: "center" }}>
+      <Text
+        variant="headlineMedium"
+        style={{ marginBottom: 20, textAlign: "center" }}
+      >
         Create an Account
       </Text>
 
@@ -53,11 +57,11 @@ export default function SignupScreen({ navigation }: { navigation: any }) {
         Sign Up
       </Button>
 
-      <Button mode="text" onPress={() => navigation.goBack()}>
+      <Button mode="text" onPress={() => router.back()}>
         Already have an account? Log In
       </Button>
-
-
     </Surface>
   );
 }
+
+

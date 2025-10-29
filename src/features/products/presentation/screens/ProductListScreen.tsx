@@ -1,28 +1,16 @@
-
 import { useAuth } from "@/src/features/auth/presentation/context/authContext";
+import { router } from "expo-router";
 import { FlatList, View } from "react-native";
 import { Button, FAB, List, Surface } from "react-native-paper";
 import { useProducts } from "../context/productContext";
 
-export default function ProductListScreen({ navigation }: { navigation: any }) {
+export default function ProductListScreen() {
   const { products, removeProduct } = useProducts();
   const { logout } = useAuth();
 
   return (
     <Surface style={{ flex: 1 }}>
-      {/* AppBar with Logout */}
-      {/* <Appbar.Header>
-        <Appbar.Content title="Products" />
-        <Appbar.Action
-          icon="logout"
-          onPress={() => {
-            logout();
-            //router.replace("/(auth)/login");
-          }}
-        />
-      </Appbar.Header> */}
-
-      {/* Empty state or Product list */}
+      {/* Lista de productos */}
       {products.length === 0 ? (
         <View
           style={{
@@ -44,12 +32,7 @@ export default function ProductListScreen({ navigation }: { navigation: any }) {
               title={item.name}
               description={`Qty: ${item.quantity}`}
               left={(props) => <List.Icon {...props} icon="cube-outline" />}
-              onPress={
-                () => {
-                  console.log("Navigating to UpdateProductScreen with id:", item._id);
-                  navigation.navigate("UpdateProductScreen", { id: item._id });
-                }
-              }
+              onPress={() => router.push(`/updateProduct?id=${item._id}`)}
               right={() => (
                 <Button onPress={() => removeProduct(item._id)}>Delete</Button>
               )}
@@ -58,7 +41,7 @@ export default function ProductListScreen({ navigation }: { navigation: any }) {
         />
       )}
 
-      {/* Floating Action Button */}
+      {/* Botón flotante para agregar producto */}
       <FAB
         icon="plus"
         style={{
@@ -66,8 +49,9 @@ export default function ProductListScreen({ navigation }: { navigation: any }) {
           right: 16,
           bottom: 16,
         }}
-        onPress={() => navigation.navigate("AddProductScreen")} // navigate to add
+        onPress={() => router.push("/addProduct")}
       />
     </Surface>
   );
 }
+

@@ -1,12 +1,9 @@
-
-
-import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 import { useState } from "react";
 import { Button, Surface, TextInput } from "react-native-paper";
 import { useProducts } from "../context/productContext";
 
 export default function AddProductScreen() {
-  const navigation = useNavigation();
   const { addProduct } = useProducts();
 
   const [name, setName] = useState("");
@@ -22,15 +19,11 @@ export default function AddProductScreen() {
       quantity: Number(quantity),
     });
 
-    navigation.goBack(); // go back to ProductListScreen
+    router.back(); // vuelve a la lista
   };
 
   return (
     <Surface style={{ flex: 1, justifyContent: "center", padding: 16 }}>
-      {/* <Text variant="headlineMedium" style={{ marginBottom: 16 }}>
-        Add Product
-      </Text> */}
-
       <TextInput
         label="Name"
         value={name}
@@ -59,3 +52,4 @@ export default function AddProductScreen() {
     </Surface>
   );
 }
+
