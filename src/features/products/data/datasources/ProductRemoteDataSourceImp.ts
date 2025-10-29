@@ -1,6 +1,6 @@
 import { ILocalPreferences } from "@/src/core/iLocalPreferences";
 import { LocalPreferencesAsyncStorage } from "@/src/core/LocalPreferencesAsyncStorage";
-import { AuthRemoteDataSourceImpl } from "@/src/features/auth/data/datasources/AuthRemoteDataSourceImp";
+import { IAuthDataSource } from "@/src/features/auth/data/datasources/iAuthDataSource";
 import { NewProduct, Product } from "../../domain/entities/Product";
 import { ProductDataSource } from "./ProductDataSource";
 
@@ -12,7 +12,7 @@ export class ProductRemoteDataSourceImp implements ProductDataSource {
   private prefs: ILocalPreferences;
 
   constructor(
-    private authService: AuthRemoteDataSourceImpl,
+    private authService: IAuthDataSource,
     projectId = process.env.EXPO_PUBLIC_ROBLE_PROJECT_ID
   ) {
     if (!projectId) {
@@ -36,22 +36,28 @@ export class ProductRemoteDataSourceImp implements ProductDataSource {
 
     const response = await fetch(url, { ...options, headers });
 
+    // 🔹 Si el token expira, intentar refrescarlo solo si el authService lo soporta
     if (response.status === 401 && retry) {
       console.warn("401 detected, trying to refresh token…");
       try {
-        const refreshed = await this.authService.refreshToken();
-        if (refreshed) {
-          // retry with new token
-          const newToken = await this.prefs.retrieveData<string>("token");
-          const retryHeaders = {
-            ...(options.headers || {}),
-            Authorization: `Bearer ${newToken}`,
-          };
-          return await fetch(url, { ...options, headers: retryHeaders });
+        if (
+          "refreshToken" in this.authService &&
+          typeof (this.authService as any).refreshToken === "function"
+        ) {
+          const refreshed = await (this.authService as any).refreshToken();
+          if (refreshed) {
+            // retry con nuevo token
+            const newToken = await this.prefs.retrieveData<string>("token");
+            const retryHeaders = {
+              ...(options.headers || {}),
+              Authorization: `Bearer ${newToken}`,
+            };
+            return await fetch(url, { ...options, headers: retryHeaders });
+          }
         }
       } catch (e) {
         console.error("Token refresh failed, forcing logout", e);
-        // Here you might trigger logout context/state
+        // Aquí podrías limpiar sesión o redirigir al login
       }
     }
 
@@ -71,8 +77,6 @@ export class ProductRemoteDataSourceImp implements ProductDataSource {
     }
 
     const data = await response.json();
-
-    // Here we assume the API returns a valid Product[]
     return data as Product[];
   }
 
@@ -95,12 +99,13 @@ export class ProductRemoteDataSourceImp implements ProductDataSource {
       );
     }
   }
+
   async addProduct(product: NewProduct): Promise<void> {
     const url = `${this.baseUrl}/insert`;
 
     const body = JSON.stringify({
       tableName: this.table,
-      records: [product], // 👈 the API expects an array of records
+      records: [product],
     });
 
     const response = await this.authorizedFetch(url, {
@@ -126,7 +131,7 @@ export class ProductRemoteDataSourceImp implements ProductDataSource {
   async updateProduct(product: Product): Promise<void> {
     const url = `${this.baseUrl}/update`;
 
-    const { _id, ...updates } = product; // 👈 separate id from fields
+    const { _id, ...updates } = product;
 
     const body = JSON.stringify({
       tableName: this.table,
@@ -184,3 +189,4 @@ export class ProductRemoteDataSourceImp implements ProductDataSource {
     }
   }
 }
+

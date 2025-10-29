@@ -1,5 +1,6 @@
 export const TOKENS = {
   AuthRemoteDS: Symbol("AuthRemoteDS"),
+  AuthLocalDS: Symbol("AuthLocalDS"),
   AuthRepo: Symbol("AuthRepo"),
   LoginUC: Symbol("LoginUC"),
   SignupUC: Symbol("SignupUC"),
@@ -12,5 +13,5 @@ export const TOKENS = {
   DeleteProductUC: Symbol("DeleteProductUC"),
   GetProductsUC: Symbol("GetProductsUC"),
   GetProductByIdUC: Symbol("GetProductByIdUC"),
-  // Add Product tokens if you want to DI those too...
-} as const;
+};
+
