@@ -1,76 +1,43 @@
-import axios from "axios";
 import { ILocalPreferences } from "@/src/core/iLocalPreferences";
 import { LocalPreferencesAsyncStorage } from "@/src/core/LocalPreferencesAsyncStorage";
-import { AuthRemoteDataSource } from "./AuthRemoteDataSource";
+import uuid from "react-native-uuid";
+import { AuthUser } from "../../domain/entities/AuthUser";
+import { IAuthDataSource } from "./iAuthDataSource";
 
-export class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  private readonly projectId: string;
-  private readonly baseUrl: string;
+export class AuthLocalDataSourceImpl implements IAuthDataSource {
   private prefs: ILocalPreferences;
+  private readonly USERS_KEY = "users";
+  private readonly CURRENT_USER_KEY = "currentUser";
 
-  constructor(projectId = process.env.EXPO_PUBLIC_ROBLE_PROJECT_ID) {
-    if (!projectId) throw new Error("❌ Missing EXPO_PUBLIC_ROBLE_PROJECT_ID env var");
-    this.projectId = projectId;
-    this.baseUrl = `https://roble-api.openlab.uninorte.edu.co/auth/${this.projectId}`;
+  constructor() {
     this.prefs = LocalPreferencesAsyncStorage.getInstance();
   }
 
-  async login(email: string, password: string): Promise<void> {
-    const { data } = await axios.post(`${this.baseUrl}/login`, { email, password });
-    await this.prefs.storeData("token", data.accessToken);
-    await this.prefs.storeData("refreshToken", data.refreshToken);
+  async login(email: string, password: string): Promise<AuthUser> {
+    console.log("🔐 [login] Intentando con:", email);
+    const users = await this.prefs.getAllEntries<AuthUser>(this.USERS_KEY);
+    const found = users.find(u => u.email === email && u.password === password);
+    if (!found) throw new Error("Credenciales inválidas");
+    await this.prefs.storeData(this.CURRENT_USER_KEY, found);
+    return found;
   }
 
-  async signUp(email: string, password: string): Promise<void> {
-    await axios.post(`${this.baseUrl}/signup`, {
-      email,
-      password,
-      name: email.split("@")[0],
-    });
+  async signup(email: string, password: string): Promise<AuthUser> {
+    const users = await this.prefs.getAllEntries<AuthUser>(this.USERS_KEY);
+    const exists = users.some(u => u.email === email);
+    if (exists) throw new Error("El usuario ya existe");
+    const newUser: AuthUser = { id: uuid.v4().toString(), email, password };
+    users.push(newUser);
+    await this.prefs.replaceEntries(this.USERS_KEY, users);
+    await this.prefs.storeData(this.CURRENT_USER_KEY, newUser);
+    return newUser;
   }
 
-  async logOut(): Promise<void> {
-    const token = await this.prefs.retrieveData<string>("token");
-    if (!token) return;
-    await axios.post(`${this.baseUrl}/logout`, null, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    await this.prefs.removeData("token");
-    await this.prefs.removeData("refreshToken");
+  async logout(): Promise<void> {
+    await this.prefs.removeData(this.CURRENT_USER_KEY);
   }
 
-  async validate(email: string, code: string): Promise<boolean> {
-    const res = await axios.post(`${this.baseUrl}/verify-email`, { email, code });
-    return res.status === 200 || res.status === 201;
-  }
-
-  async refreshToken(): Promise<boolean> {
-    const refreshToken = await this.prefs.retrieveData<string>("refreshToken");
-    if (!refreshToken) return false;
-    const { data } = await axios.post(`${this.baseUrl}/refresh-token`, { refreshToken });
-    await this.prefs.storeData("token", data.accessToken);
-    return true;
-  }
-
-  async forgotPassword(email: string): Promise<boolean> {
-    await axios.post(`${this.baseUrl}/forgot-password`, { email });
-    return true;
-  }
-
-  async resetPassword(email: string, newPassword: string, code: string): Promise<boolean> {
-    await axios.post(`${this.baseUrl}/reset-password`, {
-      token: code,
-      newPassword,
-    });
-    return true;
-  }
-
-  async verifyToken(): Promise<boolean> {
-    const token = await this.prefs.retrieveData<string>("token");
-    if (!token) return false;
-    const res = await axios.get(`${this.baseUrl}/verify-token`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.status === 200;
+  async getCurrentUser(): Promise<AuthUser | null> {
+    return await this.prefs.retrieveData<AuthUser>(this.CURRENT_USER_KEY);
   }
 }
