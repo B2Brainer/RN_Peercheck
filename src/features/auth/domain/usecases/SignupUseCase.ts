@@ -1,10 +1,12 @@
-import { AuthRepository } from "../../repositories/AuthRepository";
-import { AuthUser } from "../AuthUser";
+import { AuthUser } from "../entities/AuthUser";
+import { AuthRepository } from "../repositories/AuthRepository";
 
 export class SignupUseCase {
   constructor(private repo: AuthRepository) {}
 
   async execute(email: string, password: string): Promise<AuthUser> {
-    return this.repo.signup(email, password);
+    const user = await this.repo.signup(email, password);
+    console.log("✅ [SignupUseCase] Usuario registrado:", user);
+    return user;
   }
 }
