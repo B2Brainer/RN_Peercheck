@@ -1,10 +1,9 @@
-
+import { router } from "expo-router";
 import { useState } from "react";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { useAuth } from "../context/authContext";
 
-
-export default function LoginScreen({ navigation }: { navigation: any }) {
+export default function LoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,10 +53,10 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
         Log In
       </Button>
 
-      <Button mode="text" onPress={() => navigation.navigate('Signup')}>
+      <Button mode="text" onPress={() => router.push('/auth/signup')}>
         Don’t have an account? Sign Up
       </Button>
-
     </Surface>
   );
 }
+
