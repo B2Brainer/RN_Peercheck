@@ -1,12 +1,16 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+
+//API del contexto de autenticacion
+
 import { useDI } from "@/src/core/di/DIProvider";
 import { TOKENS } from "@/src/core/di/tokens";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { AuthUser } from "../../domain/entities/AuthUser";
 import { GetCurrentUserUseCase } from "../../domain/usecases/GetCurrentUserUseCase";
 import { LoginUseCase } from "../../domain/usecases/LoginUseCase";
 import { LogoutUseCase } from "../../domain/usecases/LogoutUseCase";
 import { SignupUseCase } from "../../domain/usecases/SignupUseCase";
 
+//Definicion del contexto de autenticacion (datos a compartir)
 type AuthContextType = {
   isLoggedIn: boolean;
   user: AuthUser | null;
@@ -15,8 +19,10 @@ type AuthContextType = {
   logout: () => Promise<void>;
 };
 
+//Creacion del contexto
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+//Proveedor del contexto de autenticacion
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const di = useDI();
   const loginUseCase = di.resolve<LoginUseCase>(TOKENS.LoginUC);
@@ -56,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+//Hook para usar el contexto de autenticacion
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");

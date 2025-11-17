@@ -1,3 +1,5 @@
+
+//interface for remote data source related to authentication
 export interface AuthRemoteDataSource {
   login(email: string, password: string): Promise<void>;
   signUp(email: string, password: string): Promise<void>;

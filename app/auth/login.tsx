@@ -11,7 +11,7 @@ export default function Login() {
   const handleLogin = async (email: string, password: string) => {
     try {
       await login(email, password);
-      console.log("✅ Login correcto, redirigiendo a productos...");
+      console.log("✅ Login correcto, redirigiendo a home...");
       router.replace("/(tabs)"); // 👈 redirige al layout principal (productos)
     } catch (e) {
       console.error("❌ Error al iniciar sesión:", e);

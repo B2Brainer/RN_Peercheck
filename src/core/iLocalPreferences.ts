@@ -7,6 +7,6 @@ export interface ILocalPreferences {
     storeEntry<T>(key: string, entry: T): Promise<void>;
     getAllEntries<T>(key: string): Promise<T[]>;
     replaceEntries<T>(key: string, entries: T[]): Promise<void>;
-
+    
     clearAll(): Promise<void>;
 }

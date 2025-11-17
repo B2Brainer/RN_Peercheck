@@ -1,7 +1,6 @@
 import { DIProvider } from '@/src/core/di/DIProvider';
 import { AuthProvider } from '@/src/features/auth/presentation/context/authContext';
 import { CourseProvider } from '@/src/features/courses/presentation/context/CourseContext';
-import { ProductProvider } from '@/src/features/products/presentation/context/productContext';
 import theme from '@/src/theme/theme';
 import { Stack } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
@@ -11,11 +10,9 @@ export default function RootLayout() {
     <DIProvider>
       <AuthProvider>
         <CourseProvider>
-          <ProductProvider>
             <PaperProvider theme={theme}>
               <Stack screenOptions={{ headerShown: false }} />
             </PaperProvider>
-          </ProductProvider>
         </CourseProvider>
       </AuthProvider>
     </DIProvider>

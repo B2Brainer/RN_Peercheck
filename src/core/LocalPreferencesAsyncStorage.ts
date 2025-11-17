@@ -3,11 +3,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ILocalPreferences } from './iLocalPreferences';
 
 export class LocalPreferencesAsyncStorage implements ILocalPreferences {
-
     private static instance: LocalPreferencesAsyncStorage;
-
     private constructor() {
-        // private so no one can do new LocalPreferencesAsyncStorage() from outside
     }
 
     static getInstance(): LocalPreferencesAsyncStorage {
@@ -18,6 +15,7 @@ export class LocalPreferencesAsyncStorage implements ILocalPreferences {
     }
 
 
+    // ILocalPreferences implementation
     async storeData<T>(key: string, value: T): Promise<void> {
         try {
             const jsonValue = JSON.stringify(value);
@@ -71,6 +69,4 @@ export class LocalPreferencesAsyncStorage implements ILocalPreferences {
     clearAll(): Promise<void> {
         throw new Error("Method not implemented.");
     }
-
-
 }
