@@ -1,23 +1,23 @@
 // src/features/courses/presentation/screens/CourseEnrollmentScreen.tsx
 
 import { useAuth } from '@/src/features/auth/presentation/context/authContext';
+import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Clipboard,
-    ScrollView,
-    StyleSheet,
-    View
+  Alert,
+  ScrollView,
+  StyleSheet,
+  View
 } from 'react-native';
 import {
-    ActivityIndicator,
-    Appbar,
-    Button,
-    Card,
-    IconButton,
-    Text,
-    useTheme
+  ActivityIndicator,
+  Appbar,
+  Button,
+  Card,
+  IconButton,
+  Text,
+  useTheme
 } from 'react-native-paper';
 import { useCourse } from '../context/CourseContext';
 
@@ -161,11 +161,9 @@ export default function CourseEnrollmentScreen() {
 
   // Función para copiar el ID del curso al portapapeles
   const copyCourseId = async () => {
-    await Clipboard.setStringAsync(courseId);
-    Alert.alert('Copiado', 'ID del curso copiado al portapapeles', [
-      { text: 'OK' }
-    ]);
-  };
+  await Clipboard.setStringAsync(courseId);
+  Alert.alert("Copiado", "ID del curso copiado al portapapeles");
+};
 
   // Navegación a otras pantallas (placeholders)
   const navigateToAddCategory = () => {

@@ -4,22 +4,22 @@ import { useAuth } from '@/src/features/auth/presentation/context/authContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    View,
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
 } from 'react-native';
 import {
-    ActivityIndicator,
-    Appbar,
-    Button,
-    Card,
-    Text,
-    TextInput,
-    useTheme,
+  ActivityIndicator,
+  Appbar,
+  Button,
+  Card,
+  Text,
+  TextInput,
+  useTheme,
 } from 'react-native-paper';
 import { useCourse } from '../context/CourseContext';
 
@@ -192,7 +192,6 @@ export default function AddCourseTeacherScreen() {
             size={24}
           />
           <Appbar.Content title="" />
-          <View style={{ width: 48 }} /> {/* Balance spacing */}
         </Appbar.Header>
 
         <View style={styles.headerContent}>
