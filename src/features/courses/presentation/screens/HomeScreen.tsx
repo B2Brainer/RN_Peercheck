@@ -1,3 +1,5 @@
+// src/features/courses/presentation/screens/HomeScreen.tsx
+
 import { useAuth } from "@/src/features/auth/presentation/context/authContext";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -31,6 +33,8 @@ const HomeScreen: React.FC = () => {
     setSelectedRole,
     getCurrentCourses,
     refreshCourses,
+    deleteCourse,
+    unenrollUser,
   } = useCourse();
 
   const isProfesor = selectedRole === UserRole.PROFESOR;
@@ -57,13 +61,33 @@ const HomeScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  // 🔹 Abrir curso
+  // 🔹 Navegación a detalles del curso
   const handleCoursePress = (course: Course) => {
-    Alert.alert("Curso seleccionado", `Has seleccionado: ${course.name}`);
+    if (isProfesor) {
+      // Profesor va a gestión del curso
+      router.push({
+        pathname: "/courses/enroll/[id]",
+        params: { 
+          id: course.id,
+          courseName: course.name,
+          teacherEmail: course.teacher
+        }
+      });
+    } else {
+      // Estudiante va a detalle del curso
+      router.push({
+        pathname: "/courses/[id]",
+        params: { 
+          id: course.id,
+          courseName: course.name,
+          teacherEmail: course.teacher
+        }
+      });
+    }
   };
 
   // 🔹 Eliminar curso o salir del curso
-  const handleDeleteCourse = (course: Course) => {
+  const handleDeleteCourse = async (course: Course) => {
     Alert.alert(
       isProfesor ? "Eliminar curso" : "Salir del curso",
       isProfesor
@@ -74,31 +98,47 @@ const HomeScreen: React.FC = () => {
         {
           text: "Confirmar",
           style: "destructive",
-          onPress: () =>
-            Alert.alert(
-              "Éxito",
-              isProfesor
-                ? "Curso eliminado correctamente"
-                : "Te has desinscrito del curso"
-            ),
+          onPress: async () => {
+            try {
+              if (isProfesor) {
+                await deleteCourse(course.id);
+              } else {
+                await unenrollUser(course.id);
+              }
+              Alert.alert(
+                "Éxito",
+                isProfesor
+                  ? "Curso eliminado correctamente"
+                  : "Te has desinscrito del curso"
+              );
+              await refreshCourses();
+            } catch (error) {
+              Alert.alert("Error", "No se pudo completar la acción");
+            }
+          },
         },
       ]
     );
   };
 
+  // 🔹 Agregar/Buscar curso
+  const handleAddCourse = () => {
+    if (isProfesor) {
+      router.push("/courses/add-teacher");
+    } else {
+      router.push("/courses/add-student");
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* ─────────────────────────────────────────────────────────────── */}
-      {/* APPBAR TRANSPARENTE (como en Flutter) */}
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* AppBar */}
       <Appbar.Header style={styles.appBar}>
         <Appbar.Content title="" />
         <Appbar.Action icon="logout" onPress={handleLogout} color="#000" />
       </Appbar.Header>
 
-      {/* ─────────────────────────────────────────────────────────────── */}
-      {/* CONTENIDO PRINCIPAL */}
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* Contenido principal */}
       <View style={styles.content}>
         {/* Logo + Nombre del usuario */}
         <View style={styles.header}>
@@ -121,7 +161,7 @@ const HomeScreen: React.FC = () => {
           onChange={(role) => setSelectedRole(role)}
         />
 
-        {/* Contenedor blanco superior con borderRadius */}
+        {/* Contenedor de cursos */}
         <View style={[styles.coursesContainer, { backgroundColor: surface }]}>
           {isLoading ? (
             <ActivityIndicator
@@ -136,7 +176,7 @@ const HomeScreen: React.FC = () => {
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
             >
-              {getCurrentCourses(isProfesor).map((course) => (
+              {getCurrentCourses().map((course) => (
                 <View key={course.id} style={styles.courseItem}>
                   <ClassCard
                     course={course}
@@ -152,12 +192,7 @@ const HomeScreen: React.FC = () => {
               <AddBigCard
                 accentBg={cardBg}
                 isProfesor={isProfesor}
-                onAdd={() =>
-                  Alert.alert(
-                    isProfesor ? "Agregar curso" : "Buscar curso",
-                    "Acción simulada"
-                  )
-                }
+                onAdd={handleAddCourse}
               />
             </ScrollView>
           )}
@@ -430,8 +465,8 @@ const styles = StyleSheet.create({
     color: "#9EA4AE",
   },
   loader: {
-  marginTop: 50,
-},
+    marginTop: 50,
+  },
 });
 
 export default HomeScreen;
