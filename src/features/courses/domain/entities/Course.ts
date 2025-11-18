@@ -18,6 +18,14 @@ export const createCourse = (courseData: Partial<Course>): Course => ({
   maxStudents: courseData.maxStudents || 30,
 });
 
+export interface CreateCourseRequest {
+  name: string;
+  nrc: number;
+  teacher: string;
+  category: string;
+  maxStudents: number;
+}
+
 export const getEnrolledCount = (course: Course): number => course.enrolledUsers.length;
 export const hasAvailableSpots = (course: Course): boolean => 
   getEnrolledCount(course) < course.maxStudents;

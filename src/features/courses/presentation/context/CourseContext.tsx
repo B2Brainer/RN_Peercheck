@@ -1,6 +1,15 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
-import { Course } from '../../domain/entities/Course';
-import { UserRole } from '../../domain/entities/UserRole';
+// src/features/courses/presentation/context/CourseContext.tsx
+import { useDI } from "@/src/core/di/DIProvider";
+import { TOKENS } from "@/src/core/di/tokens";
+import { useAuth } from "@/src/features/auth/presentation/context/authContext";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { Course } from "../../domain/entities/Course";
+import { UserRole } from "../../domain/entities/UserRole";
+import { AddCourseUseCase } from "../../domain/usecases/AddCourseUseCase";
+import { DeleteCourseUseCase } from "../../domain/usecases/DeleteCourseUseCase";
+import { EnrollUserUseCase } from "../../domain/usecases/EnrollUserUseCase";
+import { GetStudentCoursesUseCase } from "../../domain/usecases/GetStudentCoursesUseCase";
+import { GetTeacherCoursesUseCase } from "../../domain/usecases/GetTeacherCoursesUseCase";
 
 interface CourseContextType {
   teacherCourses: Course[];
@@ -8,83 +17,119 @@ interface CourseContextType {
   isLoading: boolean;
   selectedRole: UserRole;
   setSelectedRole: (role: UserRole) => void;
-  getCurrentCourses: (isTeacher: boolean) => Course[];
-  refreshCourses: () => void;
+  getCurrentCourses: () => Course[];
+  refreshCourses: () => Promise<void>;
+  addCourse: (name: string, nrc: number, category: string, maxStudents: number) => Promise<void>;
+  enrollUser: (courseId: string) => Promise<void>;
+  unenrollUser: (courseId: string) => Promise<void>;
+  deleteCourse: (courseId: string) => Promise<void>;
 }
 
 const CourseContext = createContext<CourseContextType | undefined>(undefined);
 
-export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const di = useDI();
+  const { user, isLoggedIn } = useAuth();
+  
+  // Use Cases
+  const getTeacherCoursesUC = di.resolve<GetTeacherCoursesUseCase>(TOKENS.GetTeacherCoursesUC);
+  const getStudentCoursesUC = di.resolve<GetStudentCoursesUseCase>(TOKENS.GetStudentCoursesUC);
+  const addCourseUC = di.resolve<AddCourseUseCase>(TOKENS.AddCourseUC);
+  const enrollUserUC = di.resolve<EnrollUserUseCase>(TOKENS.EnrollUserUC);
+  const deleteCourseUC = di.resolve<DeleteCourseUseCase>(TOKENS.DeleteCourseUC);
+
   const [teacherCourses, setTeacherCourses] = useState<Course[]>([]);
   const [studentCourses, setStudentCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.PROFESOR);
 
-  // Datos mock iniciales (temporal)
-  const mockTeacherCourses: Course[] = [
-    {
-      id: '1',
-      name: 'Programación Móvil',
-      nrc: 12345,
-      teacher: 'Prof. Augusto Salazar',
-      category: 'Tecnología',
-      enrolledUsers: ['estudiante1@example.com', 'estudiante2@example.com'],
-      maxStudents: 30,
-    },
-    {
-      id: '2',
-      name: 'Base de Datos',
-      nrc: 12346,
-      teacher: 'Prof. Augusto Salazar',
-      category: 'Tecnología',
-      enrolledUsers: ['estudiante1@example.com'],
-      maxStudents: 25,
-    },
-  ];
-
-  const mockStudentCourses: Course[] = [
-    {
-      id: '3',
-      name: 'Inteligencia Artificial',
-      nrc: 12347,
-      teacher: 'Prof. Ana García',
-      category: 'Tecnología',
-      enrolledUsers: ['usuario@example.com'],
-      maxStudents: 20,
-    },
-  ];
-
-  const getCurrentCourses = (isTeacher: boolean): Course[] => {
-    return isTeacher ? teacherCourses : studentCourses;
+  const getCurrentCourses = (): Course[] => {
+    return selectedRole === UserRole.PROFESOR ? teacherCourses : studentCourses;
   };
 
-  const refreshCourses = () => {
+  const refreshCourses = async (): Promise<void> => {
+    if (!user) return;
+    
     setIsLoading(true);
-    // Simular carga de datos
-    setTimeout(() => {
-      setTeacherCourses(mockTeacherCourses);
-      setStudentCourses(mockStudentCourses);
+    try {
+      const [teacherCoursesData, studentCoursesData] = await Promise.all([
+        getTeacherCoursesUC.execute(user.email),
+        getStudentCoursesUC.execute(user.email),
+      ]);
+      
+      setTeacherCourses(teacherCoursesData);
+      setStudentCourses(studentCoursesData);
+    } catch (error) {
+      console.error('Error refreshing courses:', error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  // Cargar datos iniciales
-  React.useEffect(() => {
-    refreshCourses();
-  }, []);
+  const addCourse = async (
+    name: string, 
+    nrc: number, 
+    category: string, 
+    maxStudents: number
+  ): Promise<void> => {
+    if (!user) throw new Error('Usuario no autenticado');
+    
+    await addCourseUC.execute({
+      name,
+      nrc,
+      teacher: user.email,
+      category,
+      maxStudents,
+    });
+    
+    await refreshCourses();
+  };
+
+  const enrollUser = async (courseId: string): Promise<void> => {
+    if (!user) throw new Error('Usuario no autenticado');
+    
+    await enrollUserUC.execute(courseId, user.email);
+    await refreshCourses();
+  };
+
+  const unenrollUser = async (courseId: string): Promise<void> => {
+    if (!user) throw new Error('Usuario no autenticado');
+    
+    // Implementar cuando tengamos el use case
+    await refreshCourses();
+  };
+
+  const deleteCourse = async (courseId: string): Promise<void> => {
+    await deleteCourseUC.execute(courseId);
+    await refreshCourses();
+  };
+
+  // Cargar cursos cuando el usuario cambie
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      refreshCourses();
+    } else {
+      setTeacherCourses([]);
+      setStudentCourses([]);
+    }
+  }, [isLoggedIn, user]);
+
+  const value: CourseContextType = {
+    teacherCourses,
+    studentCourses,
+    isLoading,
+    selectedRole,
+    setSelectedRole,
+    getCurrentCourses,
+    refreshCourses,
+    addCourse,
+    enrollUser,
+    unenrollUser,
+    deleteCourse,
+  };
 
   return (
-    <CourseContext.Provider
-      value={{
-        teacherCourses,
-        studentCourses,
-        isLoading,
-        selectedRole,
-        setSelectedRole,
-        getCurrentCourses,
-        refreshCourses,
-      }}
-    >
+    <CourseContext.Provider value={value}>
       {children}
     </CourseContext.Provider>
   );

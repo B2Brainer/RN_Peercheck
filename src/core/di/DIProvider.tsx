@@ -9,6 +9,13 @@ import { LoginUseCase } from "@/src/features/auth/domain/usecases/LoginUseCase";
 import { LogoutUseCase } from "@/src/features/auth/domain/usecases/LogoutUseCase";
 import { SignupUseCase } from "@/src/features/auth/domain/usecases/SignupUseCase";
 
+import { CourseRepositoryImpl } from "@/src/features/courses/data/repositories/CourseRepositoryImpl";
+import { AddCourseUseCase } from "@/src/features/courses/domain/usecases/AddCourseUseCase";
+import { DeleteCourseUseCase } from "@/src/features/courses/domain/usecases/DeleteCourseUseCase";
+import { EnrollUserUseCase } from "@/src/features/courses/domain/usecases/EnrollUserUseCase";
+import { GetStudentCoursesUseCase } from "@/src/features/courses/domain/usecases/GetStudentCoursesUseCase";
+import { GetTeacherCoursesUseCase } from "@/src/features/courses/domain/usecases/GetTeacherCoursesUseCase";
+
 
 const DIContext = createContext<typeof container | null>(null);
 
@@ -22,6 +29,14 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
       .register(TOKENS.SignupUC, new SignupUseCase(authRepo))
       .register(TOKENS.LogoutUC, new LogoutUseCase(authRepo))
       .register(TOKENS.GetCurrentUserUC, new GetCurrentUserUseCase(authRepo));
+
+    // 🔹 Casos de uso de cursos
+    const courseRepo = c.resolve<CourseRepositoryImpl>(TOKENS.CourseRepo);
+    c.register(TOKENS.GetTeacherCoursesUC, new GetTeacherCoursesUseCase(courseRepo))
+      .register(TOKENS.GetStudentCoursesUC, new GetStudentCoursesUseCase(courseRepo))
+      .register(TOKENS.AddCourseUC, new AddCourseUseCase(courseRepo))
+      .register(TOKENS.EnrollUserUC, new EnrollUserUseCase(courseRepo))
+      .register(TOKENS.DeleteCourseUC, new DeleteCourseUseCase(courseRepo));
 
     // ✅ Recuperamos el Auth DS actual con tipado seguro
     const authDS = (authRepo as AuthRepositoryImpl)["dataSource"];

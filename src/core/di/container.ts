@@ -2,6 +2,8 @@ import { AuthLocalDataSourceImpl } from "@/src/features/auth/data/datasources/Au
 import { AuthRemoteDataSourceAdapter } from "@/src/features/auth/data/datasources/AuthRemoteDataSourceAdapter";
 import { IAuthDataSource } from "@/src/features/auth/data/datasources/iAuthDataSource";
 import { AuthRepositoryImpl } from "@/src/features/auth/data/repositories/AuthRepositoryImpl";
+import { LocalCourseDataSource } from "@/src/features/courses/data/datasources/local/LocalCourseDataSource";
+import { CourseRepositoryImpl } from "@/src/features/courses/data/repositories/CourseRepositoryImpl";
 import { TOKENS } from "./tokens";
 
 // Simple Dependency Injection Container
@@ -36,4 +38,11 @@ if (USE_LOCAL) {
 }
 
 export const container = new Container();
+
+// Auth
 container.register(TOKENS.AuthRepo, new AuthRepositoryImpl(authDS));
+
+// Courses
+const courseDS = new LocalCourseDataSource();
+const courseRepo = new CourseRepositoryImpl(courseDS);
+container.register(TOKENS.CourseRepo, courseRepo);

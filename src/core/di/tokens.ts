@@ -8,5 +8,14 @@ export const TOKENS = {
   SignupUC: Symbol("SignupUC"),
   LogoutUC: Symbol("LogoutUC"),
   GetCurrentUserUC: Symbol("GetCurrentUserUC"),
+
+
+  CourseDataSource: Symbol("CourseDataSource"),
+  CourseRepo: Symbol("CourseRepository"),
+  GetTeacherCoursesUC: Symbol("GetTeacherCoursesUseCase"),
+  GetStudentCoursesUC: Symbol("GetStudentCoursesUseCase"),
+  AddCourseUC: Symbol("AddCourseUseCase"),
+  EnrollUserUC: Symbol("EnrollUserUseCase"),
+  DeleteCourseUC: Symbol("DeleteCourseUseCase"),
 };
 
