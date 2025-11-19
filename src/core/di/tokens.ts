@@ -1,5 +1,6 @@
+// src/core/di/tokens.ts
 
-//Lista unica de tokens para inyección de dependencias
+// Lista unica de tokens para inyección de dependencias
 export const TOKENS = {
   AuthRemoteDS: Symbol("AuthRemoteDS"),
   AuthLocalDS: Symbol("AuthLocalDS"),
@@ -9,13 +10,15 @@ export const TOKENS = {
   LogoutUC: Symbol("LogoutUC"),
   GetCurrentUserUC: Symbol("GetCurrentUserUC"),
 
-
   CourseDataSource: Symbol("CourseDataSource"),
   CourseRepo: Symbol("CourseRepository"),
   GetTeacherCoursesUC: Symbol("GetTeacherCoursesUseCase"),
   GetStudentCoursesUC: Symbol("GetStudentCoursesUseCase"),
   AddCourseUC: Symbol("AddCourseUseCase"),
   EnrollUserUC: Symbol("EnrollUserUseCase"),
+  // Nuevo: UseCase para desinscribir usuario
+  UnenrollUserUC: Symbol("UnenrollUserUseCase"),
   DeleteCourseUC: Symbol("DeleteCourseUseCase"),
 };
+
 

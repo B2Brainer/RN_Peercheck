@@ -10,6 +10,7 @@ import { DeleteCourseUseCase } from "../../domain/usecases/DeleteCourseUseCase";
 import { EnrollUserUseCase } from "../../domain/usecases/EnrollUserUseCase";
 import { GetStudentCoursesUseCase } from "../../domain/usecases/GetStudentCoursesUseCase";
 import { GetTeacherCoursesUseCase } from "../../domain/usecases/GetTeacherCoursesUseCase";
+import { UnenrollUserUseCase } from "../../domain/usecases/UnenrollUserUseCase";
 
 interface CourseContextType {
   teacherCourses: Course[];
@@ -37,6 +38,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const addCourseUC = di.resolve<AddCourseUseCase>(TOKENS.AddCourseUC);
   const enrollUserUC = di.resolve<EnrollUserUseCase>(TOKENS.EnrollUserUC);
   const deleteCourseUC = di.resolve<DeleteCourseUseCase>(TOKENS.DeleteCourseUC);
+  const unenrollUserUC = di.resolve<UnenrollUserUseCase>(TOKENS.UnenrollUserUC);
 
   const [teacherCourses, setTeacherCourses] = useState<Course[]>([]);
   const [studentCourses, setStudentCourses] = useState<Course[]>([]);
@@ -94,9 +96,15 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const unenrollUser = async (courseId: string): Promise<void> => {
     if (!user) throw new Error('Usuario no autenticado');
-    
-    // Implementar cuando tengamos el use case
-    await refreshCourses();
+
+    try {
+      await unenrollUserUC.execute(courseId, user.email);
+      await refreshCourses();
+    } catch (err) {
+      // Manejamos error de forma similar a Flutter: log + rethrow para que la UI lo muestre
+      console.error("Error unenrolling user:", err);
+      throw err;
+    }
   };
 
   const deleteCourse = async (courseId: string): Promise<void> => {
@@ -112,6 +120,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setTeacherCourses([]);
       setStudentCourses([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, user]);
 
   const value: CourseContextType = {
@@ -142,3 +151,4 @@ export const useCourse = () => {
   }
   return context;
 };
+

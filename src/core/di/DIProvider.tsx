@@ -1,3 +1,4 @@
+// src/core/di/DIProvider.tsx
 import { createContext, useContext, useMemo } from "react";
 import { container } from "./container";
 import { TOKENS } from "./tokens";
@@ -15,7 +16,7 @@ import { DeleteCourseUseCase } from "@/src/features/courses/domain/usecases/Dele
 import { EnrollUserUseCase } from "@/src/features/courses/domain/usecases/EnrollUserUseCase";
 import { GetStudentCoursesUseCase } from "@/src/features/courses/domain/usecases/GetStudentCoursesUseCase";
 import { GetTeacherCoursesUseCase } from "@/src/features/courses/domain/usecases/GetTeacherCoursesUseCase";
-
+import { UnenrollUserUseCase } from "@/src/features/courses/domain/usecases/UnenrollUserUseCase";
 
 const DIContext = createContext<typeof container | null>(null);
 
@@ -36,6 +37,8 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
       .register(TOKENS.GetStudentCoursesUC, new GetStudentCoursesUseCase(courseRepo))
       .register(TOKENS.AddCourseUC, new AddCourseUseCase(courseRepo))
       .register(TOKENS.EnrollUserUC, new EnrollUserUseCase(courseRepo))
+      // Registramos el nuevo UseCase para desinscribir usuario
+      .register(TOKENS.UnenrollUserUC, new UnenrollUserUseCase(courseRepo))
       .register(TOKENS.DeleteCourseUC, new DeleteCourseUseCase(courseRepo));
 
     // ✅ Recuperamos el Auth DS actual con tipado seguro
@@ -56,4 +59,5 @@ export function useDI() {
   if (!c) throw new Error("DIProvider missing");
   return c;
 }
+
 
