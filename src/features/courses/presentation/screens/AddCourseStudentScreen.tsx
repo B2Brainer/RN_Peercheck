@@ -1,291 +1,246 @@
 // src/features/courses/presentation/screens/AddCourseStudentScreen.tsx
 
-import { useAuth } from '@/src/features/auth/presentation/context/authContext';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useAuth } from "@/src/features/auth/presentation/context/authContext";
+import { useRouter } from "expo-router";
+import React, { useRef, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    View,
-} from 'react-native';
-import {
-    ActivityIndicator,
-    Appbar,
-    Button,
-    Card,
-    Text,
-    TextInput,
-    useTheme,
-} from 'react-native-paper';
-import { useCourse } from '../context/CourseContext';
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useTheme } from "react-native-paper";
+import { useCourse } from "../context/CourseContext";
 
-export default function AddCourseStudentScreen() {
+const AddCourseStudentScreen: React.FC = () => {
   const router = useRouter();
   const theme = useTheme();
-  const { user } = useAuth();
-  const { enrollUser, isLoading, refreshCourses } = useCourse();
-
-  const [courseCode, setCourseCode] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const palette = (theme.colors as any).rolePalette;
-  const accentColor = palette.estudianteAccent;
-  const surfaceColor = palette.surfaceSoft;
 
-  // Validar formulario
-  const validateForm = (): boolean => {
-    if (!courseCode.trim()) {
-      Alert.alert('Error', 'Por favor ingresa el código del curso');
-      return false;
-    }
-    return true;
-  };
+  const { enrollUser, findCourseByNrc } = useCourse() as any;
+  const { user } = useAuth();
 
-  // Inscribirse al curso
-  const handleEnroll = async () => {
-    if (!validateForm()) return;
+  const [nrc, setNrc] = useState("");
+  const [error, setError] = useState("");
+  const nrcRef = useRef<TextInput>(null);
 
-    if (!user) {
-      Alert.alert('Error', 'Debes iniciar sesión para inscribirte');
+  const handleSubmit = async () => {
+    setError("");
+
+    // Validaciones idénticas a Flutter
+    if (nrc.trim() === "") {
+      setError("Por favor ingresa el código del curso");
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      console.log('🎓 [AddCourseStudentScreen] Inscribiendo usuario:', user.email, 'en curso:', courseCode);
-      
-      await enrollUser(courseCode.trim());
-      await refreshCourses(); // Actualizar la lista de cursos
+    if (isNaN(Number(nrc))) {
+      setError("El código debe ser un número");
+      return;
+    }
 
-      // Mostrar éxito y regresar
+    const nrcNumber = Number(nrc);
+
+    // Buscar curso por NRC
+    const course = await findCourseByNrc(nrcNumber);
+
+    if (!course) {
       Alert.alert(
-        'Inscripción Exitosa',
-        'Te has inscrito al curso correctamente.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
+        "Error",
+        `No se encontró un curso con el NRC: ${nrcNumber}`
       );
-    } catch (error: any) {
-      console.error('Error enrolling in course:', error);
-      
-      let errorMessage = 'Ocurrió un error al inscribirse al curso';
-      
-      // Mensajes de error más específicos
-      if (error.message?.includes('no encontrado') || error.message?.includes('not found')) {
-        errorMessage = 'Curso no encontrado. Verifica el código e intenta nuevamente.';
-      } else if (error.message?.includes('ya inscrito') || error.message?.includes('already enrolled')) {
-        errorMessage = 'Ya estás inscrito en este curso.';
-      } else if (error.message?.includes('lleno') || error.message?.includes('full')) {
-        errorMessage = 'El curso está lleno. No hay cupos disponibles.';
-      }
+      return;
+    }
 
-      Alert.alert('Error', errorMessage);
-    } finally {
-      setIsSubmitting(false);
+    // Ya inscrito
+    if (course.enrolledUsers.includes(user!.email)) {
+      Alert.alert(
+        "Ya Inscrito",
+        `Ya estás inscrito en este curso: ${course.name}`
+      );
+      return;
+    }
+
+    // Cupo lleno
+    if (course.enrolledUsers.length >= course.maxStudents) {
+      Alert.alert(
+        "Cupo Lleno",
+        `El curso ${course.name} no tiene cupos disponibles`
+      );
+      return;
+    }
+
+    // Inscribir
+    try {
+      await enrollUser(course.id);
+      router.back();
+
+      Alert.alert(
+        "Inscripción Exitosa",
+        `Te has inscrito al curso: ${course.name}`
+      );
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Ocurrió un error");
     }
   };
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: surfaceColor }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: "#FFF" }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      {/* Header */}
-      <Appbar.Header
-        style={{
-          backgroundColor: 'transparent',
-          elevation: 0,
-        }}
-      >
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content 
-          title="Inscribirse a Curso" 
-          titleStyle={styles.headerTitle}
-        />
-      </Appbar.Header>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Inscribirse a Curso</Text>
 
-      {/* Contenido principal */}
-      <View style={styles.content}>
-        <Card style={styles.formCard}>
-          <Card.Content style={styles.cardContent}>
-            {/* Título y descripción */}
-            <Text variant="titleLarge" style={styles.title}>
-              Ingresa el código del curso
-            </Text>
-            
-            <Text variant="bodyMedium" style={styles.description}>
-              Pide el código a tu profesor. Es el ID del curso.
-            </Text>
+        <Text style={styles.label}>Ingresa el código NRC del curso</Text>
+        <Text style={styles.subLabel}>
+          Pide el código NRC a tu profesor para inscribirte en el curso
+        </Text>
 
-            {/* Campo de código del curso */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Código del Curso (ID)</Text>
-              <TextInput
-                value={courseCode}
-                onChangeText={setCourseCode}
-                placeholder="Ej: CURSO12345"
-                mode="outlined"
-                style={styles.textInput}
-                outlineColor="#001D3D"
-                activeOutlineColor={accentColor}
-                autoCapitalize="none"
-                autoCorrect={false}
-                theme={{
-                  colors: {
-                    primary: accentColor,
-                    background: '#FFFFFF',
-                  },
-                }}
-              />
-            </View>
-
-            {/* Botones de acción */}
-            <View style={styles.buttonsContainer}>
-              <Button
-                mode="outlined"
-                onPress={() => router.back()}
-                disabled={isSubmitting}
-                style={styles.cancelButton}
-                contentStyle={styles.buttonContent}
-                textColor={accentColor}
-              >
-                Cancelar
-              </Button>
-
-              <Button
-                mode="contained"
-                onPress={handleEnroll}
-                loading={isSubmitting}
-                disabled={isSubmitting || !courseCode.trim()}
-                style={[styles.enrollButton, { backgroundColor: accentColor }]}
-                contentStyle={styles.buttonContent}
-              >
-                Ingresar
-              </Button>
-            </View>
-
-            {/* Información adicional */}
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoText}>
-                💡 El código del curso es el ID único que el profesor puede ver en la pantalla de gestión del curso.
-              </Text>
-            </View>
-          </Card.Content>
-        </Card>
-      </View>
-
-      {/* Loading Overlay */}
-      {(isSubmitting || isLoading) && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={accentColor} />
-          <Text style={styles.loadingText}>Inscribiendo al curso...</Text>
+        {/* Card con NRC de ejemplo */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Cursos disponibles para prueba:</Text>
+          <Text style={styles.cardItem}>• Programación Avanzada - NRC: 12345</Text>
+          <Text style={styles.cardItem}>• Diseño de Interfaces - NRC: 67890</Text>
+          <Text style={styles.cardHint}>Usa estos NRC para probar la inscripción</Text>
         </View>
-      )}
+
+        {/* Campo NRC */}
+        <TextInput
+          ref={nrcRef}
+          style={[
+            styles.input,
+            { borderColor: palette.estudianteAccent },
+          ]}
+          placeholder="Código del Curso (NRC)"
+          value={nrc}
+          keyboardType="numeric"
+          onChangeText={setNrc}
+        />
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        {/* Botones */}
+        <View style={styles.row}>
+          <TouchableOpacity
+            style={[styles.buttonOutline, { borderColor: palette.estudianteAccent }]}
+            onPress={() => router.back()}
+          >
+            <Text
+              style={[styles.buttonOutlineText, { color: palette.estudianteAccent }]}
+            >
+              Cancelar
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.buttonFilled, { backgroundColor: palette.estudianteAccent }]}
+            onPress={handleSubmit}
+          >
+            <Text style={styles.buttonFilledText}>Ingresar</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
-}
+};
 
+/* ─────────────────────────────────────────────────────────────── */
+/* ESTILOS IDENTICOS A FLUTTER                                    */
+/* ─────────────────────────────────────────────────────────────── */
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000814',
-  },
-  content: {
-    flex: 1,
     padding: 16,
-    justifyContent: 'center',
+    paddingBottom: 60,
   },
-  formCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-  },
-  cardContent: {
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-  },
+
   title: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#000814",
+    marginBottom: 20,
+  },
+
+  label: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000814',
+    fontWeight: "bold",
+    color: "#000814",
+  },
+  subLabel: {
+    color: "#5B616E",
+    marginBottom: 16,
+  },
+
+  card: {
+    backgroundColor: "#FFF",
+    padding: 12,
+    borderRadius: 12,
+    borderColor: "#DDD",
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontWeight: "bold",
+    color: "#000814",
     marginBottom: 8,
-    textAlign: 'left',
   },
-  description: {
-    color: '#5B616E',
-    marginBottom: 32,
-    textAlign: 'left',
-    lineHeight: 20,
+  cardItem: {
+    color: "#000814",
   },
-  fieldContainer: {
-    marginBottom: 32,
+  cardHint: {
+    color: "#858597",
+    fontSize: 12,
+    marginTop: 4,
   },
-  fieldLabel: {
+
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 14,
-    fontWeight: '500',
-    color: '#858597',
     marginBottom: 8,
-    fontFamily: 'Poppins',
+    color: "#000814",
   },
-  textInput: {
-    backgroundColor: '#FFFFFF',
-    fontSize: 16,
+
+  error: {
+    color: "red",
+    marginBottom: 12,
   },
-  buttonsContainer: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 24,
+
+  row: {
+    flexDirection: "row",
+    marginTop: 26,
   },
-  cancelButton: {
+
+  buttonOutline: {
     flex: 1,
+    paddingVertical: 16,
+    borderWidth: 2,
     borderRadius: 12,
-    borderColor: '#FFD60A',
-    borderWidth: 1.5,
+    marginRight: 12,
+    alignItems: "center",
   },
-  enrollButton: {
-    flex: 1,
-    borderRadius: 12,
-    elevation: 2,
-  },
-  buttonContent: {
-    paddingVertical: 8,
-    height: 50,
-  },
-  infoContainer: {
-    backgroundColor: '#FFF8E1',
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FFD60A',
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#5B616E',
-    lineHeight: 20,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
+  buttonOutlineText: {
     fontSize: 16,
-    color: '#FFD60A',
-    fontFamily: 'Poppins',
+    fontWeight: "600",
+  },
+
+  buttonFilled: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  buttonFilledText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFF",
   },
 });
+
+export default AddCourseStudentScreen;
